@@ -1,3 +1,12 @@
+# Unpack data into intermediate layer
+# FROM ubuntu:22.04 AS data
+# WORKDIR /data_stage
+# COPY data.tar.gz /tmp/data.tar.gz
+# RUN mkdir -p /ragflow_data && \
+#     tar xzf /tmp/data.tar.gz -C /ragflow_data && \
+#     rm /tmp/data.tar.gz
+
+
 # base stage
 FROM ubuntu:22.04 AS base
 USER root
@@ -182,6 +191,9 @@ FROM base AS production
 USER root
 
 WORKDIR /ragflow
+
+# Copy baked-in data from data stage
+# COPY --from=data /ragflow_data /ragflow/data
 
 # Copy Python environment and packages
 ENV VIRTUAL_ENV=/ragflow/.venv
