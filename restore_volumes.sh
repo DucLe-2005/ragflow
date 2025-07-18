@@ -6,7 +6,7 @@ declare -A BACKUP_IMAGES=(
   ["docker_esdata01"]="ducleanh/esdata01_data:latest"
   ["docker_minio_data"]="ducleanh/minio_data_data:latest"
   ["docker_mysql_data"]="ducleanh/mysql_data_data:latest"
-  ["docker_redis_data"]="ducleanh/redis_data-data:latest"
+  ["docker_redis_data"]="ducleanh/redis_data_data:latest"
 )
 
 echo "🔄 Restoring RAGFlow volumes from backup images..."
