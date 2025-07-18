@@ -1,28 +1,34 @@
 #!/bin/bash
+set -e
 
-# Docker Hub username
-DOCKERHUB_USER="ducleanh"
+# Docker Hub images mapping
+declare -A BACKUP_IMAGES=(
+  ["docker_esdata01"]="ducleanh/esdata01_data:latest"
+  ["docker_minio_data"]="ducleanh/minio_data_data:latest"
+  ["docker_mysql_data"]="ducleanh/mysql_data_data:latest"
+  ["docker_redis_data"]="ducleanh/redis_data-data:latest"
+)
 
-# List of volumes and their corresponding images
-VOLUMES=("minio_data" "mysql_data" "esdata01" "redis_data")
+echo "🔄 Restoring RAGFlow volumes from backup images..."
 
-for VOLUME in "${VOLUMES[@]}"; do
-    echo "Restoring volume: $VOLUME"
-    
-    # Create the volume (does nothing if it already exists)
-    docker volume create "$VOLUME"
+for VOLUME in "${!BACKUP_IMAGES[@]}"; do
+  IMAGE="${BACKUP_IMAGES[$VOLUME]}"
+  TMP_CONT="tmp_restore_${VOLUME}"
 
-    # Pull the backup image from Docker Hub (optional if already local)
-    docker pull "${DOCKERHUB_USER}/${VOLUME}-data:latest"
+  echo "⏬ Pulling $IMAGE..."
+  docker pull "$IMAGE"
 
-    # Run a temporary container to restore data into the volume
-    docker run --rm \
-        -v "${VOLUME}:/target" \
-        "${DOCKERHUB_USER}/${VOLUME}-data:latest" \
-        sh -c "cp -a /data/. /target/"
+  echo "🐢 Creating temp container from $IMAGE..."
+  docker create --name "$TMP_CONT" "$IMAGE" > /dev/null
 
-    echo "✅ Restored $VOLUME"
-    echo "------------------------------"
+  echo "📤 Copying data into volume $VOLUME..."
+  docker run --rm \
+    --volumes-from "$TMP_CONT" \
+    -v "${VOLUME}:/target" \
+    alpine \
+      sh -c "cp -a /data/. /target/"
+
+  echo "🗑 Removing temporary container..."
+  docker rm "$TMP_CONT" > /dev/null
+
 done
-
-echo "🎉 All volumes have been restored!"
